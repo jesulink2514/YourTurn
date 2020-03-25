@@ -1,51 +1,112 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Xamarin.Forms;
 
 namespace Techies.YourTurn.Security
 {
-    public class AzureADB2COptions
-    {
-        public string Tenant { get; set; }
-        public string B2CHostName { get; set; }
-        public string ClientId { get; set; }
-        public string PolicySignUpSignIn { get; set; }
-        public string PolicyResetPassword { get; set; }
-        public string[] Scopes { get;set; }
-        public string AuthorityBase { get; set; }
-        public string iOSKeyChainGroup { get; set; }
-    }
-    public class AuthenticationService
+    public class AuthenticationService : IAuthenticationService
     {
         private readonly AzureADB2COptions _options;
-        private readonly IParentWindowLocator _windowLocator;
-        private IPublicClientApplication _pca;
+        private readonly IPublicClientApplication _pca;
 
         public AuthenticationService(
             AzureADB2COptions options,
             IParentWindowLocator windowLocator)
         {
             _options = options;
-            _windowLocator = windowLocator;
 
-            var builder = PublicClientApplicationBuilder.Create(options.ClientId)
-                .WithB2CAuthority(options.B2CHostName)
-                .WithRedirectUri($"msal{options.ClientId}://auth")
-                .WithIosKeychainSecurityGroup(options.iOSKeyChainGroup);
+
+            var builder = PublicClientApplicationBuilder.Create(options.ClientId);
+
+            builder = builder.WithRedirectUri($"msal{options.ClientId}://auth")
+            .WithIosKeychainSecurityGroup(options.iOSKeyChainGroup)
+            .WithB2CAuthority($"{_options.AuthorityBase}{_options.PolicySignUpSignIn}");
 
             if (Device.RuntimePlatform == "Android")
             {
-                builder = builder.WithParentActivityOrWindow(() => _windowLocator.GetCurrentWindow());
+                builder = builder.WithParentActivityOrWindow(windowLocator.GetCurrentWindow);
             }
 
             _pca = builder.Build();
         }
+
+        public async Task<UserContext> SignInAsync()
+        {
+            UserContext newContext;
+            try
+            {
+                // acquire token silent
+                newContext = await AcquireTokenSilent();
+            }
+            catch (MsalUiRequiredException)
+            {
+                // acquire token interactive
+                newContext = await SignInInteractively();
+            }
+            return newContext;
+        }
+
+        private async Task<UserContext> AcquireTokenSilent()
+        {
+            var accounts = await _pca.GetAccountsAsync();
+
+            var authResult = await _pca.AcquireTokenSilent(_options.Scopes,
+                    GetAccountByPolicy(accounts, _options.PolicySignUpSignIn)
+                )
+               .WithB2CAuthority($"{_options.AuthorityBase}{_options.PolicySignUpSignIn}")
+               .ExecuteAsync();
+
+            var newContext = new UserContext
+            {
+                AccessToken = authResult.AccessToken
+            };
+
+            return newContext;
+        }
+
+        private async Task<UserContext> SignInInteractively()
+        {
+            var accounts = await _pca.GetAccountsAsync();
+
+            var authResult = await _pca.AcquireTokenInteractive(_options.Scopes)
+                .WithAccount(GetAccountByPolicy(accounts, _options.PolicySignUpSignIn))
+                .ExecuteAsync();
+
+            return new UserContext
+            {
+                AccessToken = authResult.AccessToken
+            };
+        }
+
+        private IAccount GetAccountByPolicy(IEnumerable<IAccount> accounts, string policy)
+        {
+            foreach (var account in accounts)
+            {
+                string userIdentifier = account.HomeAccountId.ObjectId.Split('.')[0];
+                if (userIdentifier.EndsWith(policy.ToLower())) return account;
+            }
+
+            return null;
+        }
     }
 
-    public interface IParentWindowLocator
+    public class UserContext
     {
-        object GetCurrentWindow();
+        public string Name { get; internal set; }
+        public string UserIdentifier { get; internal set; }
+        public bool IsLoggedOn { get; internal set; }
+        public string GivenName { get; internal set; }
+        public string FamilyName { get; internal set; }
+        public string Province { get; internal set; }
+        public string PostalCode { get; internal set; }
+        public string Country { get; internal set; }
+        public string EmailAddress { get; internal set; }
+        public string JobTitle { get; internal set; }
+        public string StreetAddress { get; internal set; }
+        public string City { get; internal set; }
+        public string AccessToken { get; internal set; }
     }
 }

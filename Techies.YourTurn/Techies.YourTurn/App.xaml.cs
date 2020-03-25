@@ -24,7 +24,7 @@ namespace Techies.YourTurn
         {
             InitializeComponent();
 
-            await NavigationService.NavigateAsync("NavigationPage/MainPage");
+            await NavigationService.NavigateAsync("LoginPage");
         }
 
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
@@ -32,16 +32,19 @@ namespace Techies.YourTurn
             containerRegistry.RegisterForNavigation<NavigationPage>();
             containerRegistry.RegisterForNavigation<MainPage, MainPageViewModel>();
             containerRegistry.RegisterForNavigation<LoginPage, LoginPageViewModel>();
+
+            containerRegistry.Register<IAuthenticationService, AuthenticationService>();
+
             containerRegistry.RegisterInstance(new AzureADB2COptions
             {
-                AuthorityBase = "stechies.b2clogin.com",
+                AuthorityBase = "https://stechies.b2clogin.com/tfp/stechies.onmicrosoft.com/",
                 B2CHostName = "stechies.onmicrosoft.com",
                 ClientId = "378ad4d0-d108-4b5b-b76d-69e4c3db1e22",
                 iOSKeyChainGroup = "stechies.group",
                 PolicyResetPassword = "B2C_1_PasswordReset",
                 PolicySignUpSignIn = "B2C_1_SignUpSignIn",
                 Scopes = new[] { "https://stechies.onmicrosoft.com/your.turn/api" },
-                Tenant = "1e2a6d3b-f89e-4fe7-b14e-0ed5cc604009"
+                Tenant = "stechies.onmicrosoft.com"
             });
         }
     }

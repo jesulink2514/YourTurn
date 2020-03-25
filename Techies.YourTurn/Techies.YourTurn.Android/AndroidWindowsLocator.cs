@@ -7,7 +7,7 @@ namespace Techies.YourTurn.Droid
     {
         public object GetCurrentWindow()
         {
-            return CrossCurrentActivity.Current;
+            return CrossCurrentActivity.Current.Activity;
         }
     }
 }
