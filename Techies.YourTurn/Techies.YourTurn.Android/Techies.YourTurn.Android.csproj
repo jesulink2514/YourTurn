@@ -56,6 +56,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Acr.UserDialogs">
+      <Version>7.1.0.440</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.Identity.Client">
       <Version>4.10.0</Version>
     </PackageReference>

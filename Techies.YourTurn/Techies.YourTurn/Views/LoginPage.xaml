@@ -9,5 +9,7 @@
 
         <Button Command="{Binding LoginCommand}" Text="Login" />
 
+        <Button Command="{Binding LogoutCommand}" Text="Logout" />
+
     </StackLayout>
 </ContentPage>

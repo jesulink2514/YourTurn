@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Xamarin.Forms;
@@ -47,6 +46,20 @@ namespace Techies.YourTurn.Security
                 newContext = await SignInInteractively();
             }
             return newContext;
+        }
+
+        public async Task<UserContext> SignOutAsync()
+        {
+
+            IEnumerable<IAccount> accounts = await _pca.GetAccountsAsync();
+            while (accounts.Any())
+            {
+                await _pca.RemoveAsync(accounts.FirstOrDefault());
+                accounts = await _pca.GetAccountsAsync();
+            }
+            var signedOutContext = new UserContext();
+            signedOutContext.IsLoggedOn = false;
+            return signedOutContext;
         }
 
         private async Task<UserContext> AcquireTokenSilent()
@@ -97,16 +110,9 @@ namespace Techies.YourTurn.Security
     {
         public string Name { get; internal set; }
         public string UserIdentifier { get; internal set; }
-        public bool IsLoggedOn { get; internal set; }
-        public string GivenName { get; internal set; }
-        public string FamilyName { get; internal set; }
-        public string Province { get; internal set; }
-        public string PostalCode { get; internal set; }
         public string Country { get; internal set; }
         public string EmailAddress { get; internal set; }
-        public string JobTitle { get; internal set; }
-        public string StreetAddress { get; internal set; }
-        public string City { get; internal set; }
+        public bool IsLoggedOn { get; internal set; }
         public string AccessToken { get; internal set; }
     }
 }

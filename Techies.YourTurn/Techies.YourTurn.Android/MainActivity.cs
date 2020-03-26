@@ -1,6 +1,9 @@
-﻿using Android.App;
+﻿using Acr.UserDialogs;
+using Android.App;
+using Android.Content;
 using Android.Content.PM;
 using Android.OS;
+using Microsoft.Identity.Client;
 using Prism;
 using Prism.Ioc;
 using Techies.YourTurn.Security;
@@ -18,7 +21,19 @@ namespace Techies.YourTurn.Droid
             base.OnCreate(bundle);
 
             global::Xamarin.Forms.Forms.Init(this, bundle);
+
+            UserDialogs.Init(this);
+
             LoadApplication(new App(new AndroidInitializer()));
+        }
+
+        protected override void OnActivityResult(int requestCode,
+            Result resultCode, Intent data)
+        {
+            base.OnActivityResult(requestCode, resultCode, data);
+            AuthenticationContinuationHelper.SetAuthenticationContinuationEventArgs(requestCode,
+                resultCode,
+                data);
         }
     }
 
