@@ -1,11 +1,67 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Techies.YourTurn.Views.MainPage"
-             Title="{Binding Title}">
+<ContentPage
+    x:Class="Techies.YourTurn.Views.MainPage"
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Name="Page"
+    Title="{Binding Title}"
+    BackgroundColor="Accent">
 
-    <StackLayout HorizontalOptions="CenterAndExpand" VerticalOptions="CenterAndExpand">
-        <Label Text="Welcome to Xamarin Forms and Prism!" />
-    </StackLayout>
+    <Grid Padding="30,60,30,30">
+
+        <Frame
+            Padding="30,80,30,30"
+            BackgroundColor="White"
+            BindingContext="{Binding User}"
+            CornerRadius="20"
+            HasShadow="False">
+            <StackLayout HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+                <Label
+                    FontSize="Medium"
+                    Text="Name"
+                    TextColor="LightGray" />
+                <Label
+                    Margin="0,0,0,10"
+                    FontSize="Large"
+                    Text="{Binding DisplayName}" />
+
+
+                <Label
+                    FontSize="Medium"
+                    Text="Email"
+                    TextColor="LightGray" />
+                <Label
+                    Margin="0,0,0,10"
+                    FontSize="Large"
+                    Text="{Binding EmailAddress}" />
+
+                <Label
+                    FontSize="Medium"
+                    Text="Country"
+                    TextColor="LightGray" />
+                <Label
+                    Margin="0,0,0,10"
+                    FontSize="Large"
+                    Text="{Binding Country}" />
+
+                <Button
+                    Margin="0,20"
+                    BackgroundColor="Accent"
+                    Command="{Binding BindingContext.LogoutCommand, Source={x:Reference Page}}"
+                    CornerRadius="20"
+                    Text="Sign Out"
+                    TextColor="White" />
+            </StackLayout>
+        </Frame>
+
+        <Image
+            Aspect="AspectFill"
+            HeightRequest="100"
+            HorizontalOptions="Center"
+            Source="https://i.ya-webdesign.com/images/profile-image-png-8.png"
+            TranslationY="-40"
+            VerticalOptions="Start" />
+
+    </Grid>
 
 </ContentPage>

@@ -7,35 +7,36 @@ using System.Linq;
 using System.Windows.Input;
 using Acr.UserDialogs;
 using Microsoft.Identity.Client;
+using Prism.Navigation;
 using Techies.YourTurn.Security;
 
 namespace Techies.YourTurn.ViewModels
 {
-    public class LoginPageViewModel : BindableBase
+    public class LoginPageViewModel : BindableBase, INavigatedAware
     {
         private readonly IAuthenticationService _authenticationService;
+        private readonly INavigationService _navigationService;
 
-        public LoginPageViewModel(IAuthenticationService authenticationService)
+        public LoginPageViewModel(
+            IAuthenticationService authenticationService,
+            INavigationService navigationService)
         {
             _authenticationService = authenticationService;
-            LoginCommand = new DelegateCommand(OnLogin);
-            LogoutCommand = new DelegateCommand(OnLogout);
+            _navigationService = navigationService;
         }
 
-        public ICommand LoginCommand { get; private set; }
-        public ICommand LogoutCommand { get; private set; }
 
-        private async void OnLogin()
+        public void OnNavigatedFrom(INavigationParameters parameters)
         {
-            using (UserDialogs.Instance.Loading())
+        }
+
+        public async void OnNavigatedTo(INavigationParameters parameters)
+        {
+            using (UserDialogs.Instance.Loading("Signing in..."))
             {
                 var result = await _authenticationService.SignInAsync();
-                Debug.WriteLine(result.AccessToken);
+                if(result.IsLoggedOn) await _navigationService.NavigateAsync("MainPage",new NavigationParameters{{"User", result }});
             }
-        }
-        private async void OnLogout()
-        {
-            await _authenticationService.SignOutAsync();
         }
     }
 }

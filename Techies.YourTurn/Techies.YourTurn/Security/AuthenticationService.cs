@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
+using Newtonsoft.Json.Linq;
 using Xamarin.Forms;
 
 namespace Techies.YourTurn.Security
@@ -51,14 +54,14 @@ namespace Techies.YourTurn.Security
         public async Task<UserContext> SignOutAsync()
         {
 
-            IEnumerable<IAccount> accounts = await _pca.GetAccountsAsync();
+            var accounts = (await _pca.GetAccountsAsync()).ToArray();
             while (accounts.Any())
             {
                 await _pca.RemoveAsync(accounts.FirstOrDefault());
-                accounts = await _pca.GetAccountsAsync();
+                accounts = (await _pca.GetAccountsAsync()).ToArray();
             }
-            var signedOutContext = new UserContext();
-            signedOutContext.IsLoggedOn = false;
+
+            var signedOutContext = new UserContext {IsLoggedOn = false};
             return signedOutContext;
         }
 
@@ -72,10 +75,27 @@ namespace Techies.YourTurn.Security
                .WithB2CAuthority($"{_options.AuthorityBase}{_options.PolicySignUpSignIn}")
                .ExecuteAsync();
 
+            return CreateContextFromAuthResult(authResult);
+        }
+
+        private UserContext CreateContextFromAuthResult(AuthenticationResult authResult)
+        {
+            var user = ParseToken(authResult.IdToken);
             var newContext = new UserContext
             {
-                AccessToken = authResult.AccessToken
+                IsLoggedOn = true,
+                AccessToken = authResult.AccessToken,
+                Name = user["given_name"]?.ToString(),
+                Surname = user["surname"]?.ToString(),
+                DisplayName = user["name"]?.ToString(),
+                UserIdentifier = user["oid"]?.ToString(),
+                Country = user["country"]?.ToString()
             };
+
+            if (user["emails"] is JArray emails)
+            {
+                newContext.EmailAddress = emails[0].ToString();
+            }
 
             return newContext;
         }
@@ -88,10 +108,7 @@ namespace Techies.YourTurn.Security
                 .WithAccount(GetAccountByPolicy(accounts, _options.PolicySignUpSignIn))
                 .ExecuteAsync();
 
-            return new UserContext
-            {
-                AccessToken = authResult.AccessToken
-            };
+            return CreateContextFromAuthResult(authResult);
         }
 
         private IAccount GetAccountByPolicy(IEnumerable<IAccount> accounts, string policy)
@@ -104,12 +121,32 @@ namespace Techies.YourTurn.Security
 
             return null;
         }
+
+        JObject ParseToken(string idToken)
+        {
+            // Get the piece with actual user info
+            idToken = idToken.Split('.')[1];
+            idToken = Base64UrlDecode(idToken);
+            return JObject.Parse(idToken);
+        }
+
+        private string Base64UrlDecode(string s)
+        {
+            s = s.Replace('-', '+').Replace('_', '/');
+            s = s.PadRight(s.Length + (4 - s.Length % 4) % 4, '=');
+            var byteArray = Convert.FromBase64String(s);
+            var decoded = Encoding.UTF8.GetString(byteArray, 0, byteArray.Count());
+            return decoded;
+        }
+
     }
 
     public class UserContext
     {
+        public string UserIdentifier { get; set; }
+        public string DisplayName { get; set; }
         public string Name { get; internal set; }
-        public string UserIdentifier { get; internal set; }
+        public string Surname { get; set; }
         public string Country { get; internal set; }
         public string EmailAddress { get; internal set; }
         public bool IsLoggedOn { get; internal set; }
