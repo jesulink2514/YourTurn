@@ -67,13 +67,13 @@ namespace Techies.YourTurn.Security
 
         private async Task<UserContext> AcquireTokenSilent()
         {
-            var accounts = await _pca.GetAccountsAsync();
+            var accounts = await _pca.GetAccountsAsync().ConfigureAwait(false);
 
             var authResult = await _pca.AcquireTokenSilent(_options.Scopes,
                     GetAccountByPolicy(accounts, _options.PolicySignUpSignIn)
                 )
                .WithB2CAuthority($"{_options.AuthorityBase}{_options.PolicySignUpSignIn}")
-               .ExecuteAsync();
+               .ExecuteAsync().ConfigureAwait(false);
 
             return CreateContextFromAuthResult(authResult);
         }
@@ -102,13 +102,20 @@ namespace Techies.YourTurn.Security
 
         private async Task<UserContext> SignInInteractively()
         {
-            var accounts = await _pca.GetAccountsAsync();
+            try
+            {
+                var accounts = await _pca.GetAccountsAsync();
 
-            var authResult = await _pca.AcquireTokenInteractive(_options.Scopes)
-                .WithAccount(GetAccountByPolicy(accounts, _options.PolicySignUpSignIn))
-                .ExecuteAsync();
+                var authResult = await _pca.AcquireTokenInteractive(_options.Scopes)
+                    .WithAccount(GetAccountByPolicy(accounts, _options.PolicySignUpSignIn))
+                    .ExecuteAsync();
 
-            return CreateContextFromAuthResult(authResult);
+                return CreateContextFromAuthResult(authResult);
+            }
+            catch (MsalClientException)
+            {
+                return new UserContext { IsLoggedOn = false };
+            }
         }
 
         private IAccount GetAccountByPolicy(IEnumerable<IAccount> accounts, string policy)
