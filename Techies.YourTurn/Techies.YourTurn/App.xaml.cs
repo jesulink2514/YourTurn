@@ -37,14 +37,14 @@ namespace Techies.YourTurn
 
             containerRegistry.RegisterInstance(new AzureADB2COptions
             {
-                AuthorityBase = "https://stechies.b2clogin.com/tfp/stechies.onmicrosoft.com/",
-                B2CHostName = "stechies.onmicrosoft.com",
-                ClientId = "378ad4d0-d108-4b5b-b76d-69e4c3db1e22",
+                AuthorityBase = "https://<your-tenant>.b2clogin.com/tfp/<your-tenant>.onmicrosoft.com/",
+                B2CHostName = "<your-tenant>.onmicrosoft.com",
+                ClientId = "xxxxxx-xxxxx",
                 iOSKeyChainGroup = "stechies.group",
                 PolicyResetPassword = "B2C_1_PasswordReset",
                 PolicySignUpSignIn = "B2C_1_SignUpSignIn",
-                Scopes = new[] { "https://stechies.onmicrosoft.com/your.turn/api" },
-                Tenant = "stechies.onmicrosoft.com"
+                Scopes = new[] { "https://<your-tenant>.onmicrosoft.com/your.turn/api" },
+                Tenant = "<your-tenant>.onmicrosoft.com"
             });
         }
     }
